@@ -16,14 +16,12 @@ vector<Entry> DataLoader::loadCSV(const string& filename) {
     
     // Skip header
     getline(file, line);
-
     while (getline(file, line)) {
         stringstream ss(line);
         string temp;
         Entry entry;
-
         getline(ss, entry.region, ',');
-        
+    
         getline(ss, temp, ',');
         entry.day = stoi(temp);
 
