@@ -53,11 +53,11 @@ bool Analyzer::isRisingTrend(const vector<int>& cases, int windowSize) {
 string Analyzer::classifyRegion(float growth, bool trend, float cpm) {
 
     // OUTBREAK: strong exponential growth + consistent rise
-    if (growth > 30 && trend)
+    if ((growth > 30 && trend) || cpm > 0.5)
         return "OUTBREAK";
 
     // WARNING: moderate growth or rising pattern
-    else if (growth > 15 && trend)
+    else if ((growth > 15 && trend) || cpm > 0.1)
         return "WARNING";
 
     // SAFE: low or unstable growth

@@ -25,6 +25,9 @@ public:
     void insert(string region, int day, int cases);
     int get(string region, int day) const;
     void print() const;
+    bool search(string region, int day) const;
+    bool update(string region, int day, int newCases);
+    bool remove(string region, int day);
 
     vector<int> extractRegion(string region, int totalDays) const;
     vector<int> extractNonZeroCases(string region) const;

@@ -6,40 +6,40 @@ KDTree::KDTree() {
 }
 
 // Insert helper
-KDNode* KDTree::insertRec(KDNode* node, string region, float growth, float cpm, int depth) {
+KDNode* KDTree::insert_recursion(KDNode* node, string region, float growth, float cpm, int depth) {
     if (node == nullptr) {
         return new KDNode(region, growth, cpm);
     }
     int axis = depth % 2;
     if (axis == 0) {
         if (growth < node->growth)
-            node->left = insertRec(node->left, region, growth, cpm, depth + 1);
+            node->left = insert_recursion(node->left, region, growth, cpm, depth + 1);
         else
-            node->right = insertRec(node->right, region, growth, cpm, depth + 1);
+            node->right = insert_recursion(node->right, region, growth, cpm, depth + 1);
     } else {
         if (cpm < node->cpm)
-            node->left = insertRec(node->left, region, growth, cpm, depth + 1);
+            node->left = insert_recursion(node->left, region, growth, cpm, depth + 1);
         else
-            node->right = insertRec(node->right, region, growth, cpm, depth + 1);
+            node->right = insert_recursion(node->right, region, growth, cpm, depth + 1);
     }
     return node;
 }
 
 // Public insert
 void KDTree::insert(string region, float growth, float cpm) {
-    root = insertRec(root, region, growth, cpm, 0);
+    root = insert_recursion(root, region, growth, cpm, 0);
 }
 
 // Display helper
-void KDTree::displayRec(KDNode* node, int depth) {
+void KDTree::display_recursion(KDNode* node, int depth) {
     if (node == nullptr) return;
-    displayRec(node->left, depth + 1);
+    display_recursion(node->left, depth + 1);
     cout << "Region: " << node->region
          << " | Growth: " << node->growth
          << " | CPM: " << node->cpm
          << " | Depth: " << depth << endl;
 
-    displayRec(node->right, depth + 1);
+    display_recursion(node->right, depth + 1);
 }
 
 // Public display
@@ -48,7 +48,7 @@ void KDTree::display() {
         cout << "KD-Tree is empty." << endl;
         return;
     }
-    displayRec(root, 0);
+    display_recursion(root, 0);
 }
 
 // Squared Euclidean distance
@@ -189,3 +189,81 @@ vector<KDNode*> KDTree::rangeSearch(float minGrowth, float maxGrowth,
     rangeSearchRec(root, minGrowth, maxGrowth, minCpm, maxCpm, 0, results);
     return results;
 }
+
+KDNode* KDTree::searchRec(KDNode* node, string region) {
+    if (node == nullptr) return nullptr;
+
+    if (node->region == region) return node;
+
+    KDNode* left = searchRec(node->left, region);
+    if (left != nullptr) return left;
+
+    return searchRec(node->right, region);
+}
+
+KDNode* KDTree::searchRegion(string region) {
+    return searchRec(root, region);
+}
+
+
+bool KDTree::updateRegion(string region, float newGrowth, float newCpm) {
+    KDNode* node = searchRegion(region);
+
+    if (node == nullptr) return false;
+
+    deleteNode(region);
+    insert(region, newGrowth, newCpm);
+
+    return true;
+}
+
+
+KDNode* KDTree::deleteRec(KDNode* node, string region, int depth) {
+    if (node == nullptr) return nullptr;
+
+    int axis = depth % 2;
+
+    // Found node to delete
+    if (node->region == region) {
+
+        // Case 1: right subtree exists
+        if (node->right != nullptr) {
+            KDNode* minNode = findMinRec(node->right, axis, depth + 1);
+
+            node->region = minNode->region;
+            node->growth = minNode->growth;
+            node->cpm = minNode->cpm;
+
+            node->right = deleteRec(node->right, minNode->region, depth + 1);
+        }
+        // Case 2: only left subtree exists
+        else if (node->left != nullptr) {
+            KDNode* minNode = findMinRec(node->left, axis, depth + 1);
+
+            node->region = minNode->region;
+            node->growth = minNode->growth;
+            node->cpm = minNode->cpm;
+
+            node->right = deleteRec(node->left, minNode->region, depth + 1);
+            node->left = nullptr;
+        }
+        // Case 3: leaf node
+        else {
+            delete node;
+            return nullptr;
+        }
+
+        return node;
+    }
+
+    // Traverse (just use region for demo)
+    node->left = deleteRec(node->left, region, depth + 1);
+    node->right = deleteRec(node->right, region, depth + 1);
+
+    return node;
+}
+
+void KDTree::deleteNode(string region) {
+    root = deleteRec(root, region, 0);
+}
+

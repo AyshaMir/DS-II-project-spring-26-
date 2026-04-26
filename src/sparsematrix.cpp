@@ -53,6 +53,46 @@ int SparseMatrix::getCount() const {
     return count;
 }
 
+bool SparseMatrix::search(string region, int day) const {
+    for (int i = 0; i < count; i++) {
+        if (entries[i].region == region && entries[i].day == day) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool SparseMatrix::update(string region, int day, int newCases) {
+    for (int i = 0; i < count; i++) {
+        if (entries[i].region == region && entries[i].day == day) {
+            if (newCases > 0) {
+                entries[i].cases = newCases;
+            } else {
+                // if updated to 0 → remove entry (sparse logic)
+                remove(region, day);
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+bool SparseMatrix::remove(string region, int day) {
+    for (int i = 0; i < count; i++) {
+        if (entries[i].region == region && entries[i].day == day) {
+
+            // shift left to fill gap
+            for (int j = i; j < count - 1; j++) {
+                entries[j] = entries[j + 1];
+            }
+
+            count--;
+            return true;
+        }
+    }
+    return false;
+}
+
 vector<int> SparseMatrix::extractNonZeroCases(string region) const {
     vector<int> cases;
 

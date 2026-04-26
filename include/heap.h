@@ -21,6 +21,9 @@ void heapifyUp(int index);
 void heapifyDown(int index);
 void insert(string region, float growth, float cpm);
 Region extractMax();
+bool searchRegion(string region);
+bool updateRegion(string region, float newGrowth, float newCpm);
+bool deleteRegion(string region);
 
 // Utility/display functions
 void showMax();

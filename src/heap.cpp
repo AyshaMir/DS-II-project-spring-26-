@@ -34,6 +34,55 @@ void insert(string region, float growth, float cpm) {
     heapifyUp(heap.size() - 1);
 }
 
+
+bool searchRegion(string region) {
+    for (int i = 0; i < (int)heap.size(); i++) {
+        if (heap[i].region == region) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool updateRegion(string region, float newGrowth, float newCpm) {
+    for (int i = 0; i < (int)heap.size(); i++) {
+        if (heap[i].region == region) {
+            float oldGrowth = heap[i].growth;
+
+            heap[i].growth = newGrowth;
+            heap[i].cpm = newCpm;
+
+            if (newGrowth > oldGrowth) {
+                heapifyUp(i);
+            } else {
+                heapifyDown(i);
+            }
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool deleteRegion(string region) {
+    for (int i = 0; i < (int)heap.size(); i++) {
+        if (heap[i].region == region) {
+            heap[i] = heap[heap.size() - 1];
+            heap.pop_back();
+
+            if (i < (int)heap.size()) {
+                heapifyUp(i);
+                heapifyDown(i);
+            }
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
 // Show max element without removing
 void showMax() {
     if (!heap.empty()) {

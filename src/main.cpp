@@ -38,7 +38,7 @@ int getMaxDay(const vector<Entry>& data) {
     int maxDay = 0;
     for (const auto& e : data) {
         if (e.day > maxDay) {
-            maxDay = e.day;
+            maxDay = e.day; //basically itnay days of data 
         }
     }
     return maxDay;
@@ -46,6 +46,8 @@ int getMaxDay(const vector<Entry>& data) {
 
 int main() {
     heap.clear();
+
+    //create objects
     DataLoader loader;
     Analyzer analyzer;
     SparseMatrix sm;
@@ -64,7 +66,7 @@ int main() {
         if (a.region == b.region)
             return a.day < b.day;
         return a.region < b.region;
-    });
+    }); //growth calc needs day by day data
 
     // Insert into sparse matrix
     for (const auto& e : data) {
@@ -91,8 +93,8 @@ int main() {
         }
 
         // Analyzer
-        float avgGrowth = analyzer.calculateAverageGrowth(cases);
-        int windowSize = min(5, (int)cases.size());
+        float avgGrowth = analyzer.calculateAverageGrowth(cases); //log based growth calc
+        int windowSize = min(5, (int)cases.size()); //last 5 values 
         bool trend = analyzer.isRisingTrend(cases, windowSize);
         float cpm = analyzer.calculateCasesPerMillion(cases, population);
 
@@ -121,7 +123,7 @@ int main() {
         cout << endl;
 
         cout << fixed << setprecision(2);
-        cout << "Average Growth: " << avgGrowth << "%" << endl;
+        cout << "Growth: " << avgGrowth << "%" << endl;
         cout << "Cases per Million: " << cpm << endl;
         cout << "Trend: " << (trend ? "Rising" : "Not Rising") << endl;
         cout << "Final Status: " << status << endl;
