@@ -40,30 +40,29 @@ private:
                         int depth,
                         vector<KDNode*>& results);
 
-    // New helper functions
     KDNode* searchRec(KDNode* node, string region);
     KDNode* deleteRec(KDNode* node, string region, int depth);
+
+    void collectNodes(KDNode* node, vector<KDNode*>& nodes);
 
 public:
     KDTree();
 
-    // Insert
     void insert(string region, float growth, float cpm);
-
-    // Display
     void display();
 
-    // Search-style queries
     KDNode* searchRegion(string region);
     KDNode* nearestNeighbor(float targetGrowth, float targetCpm);
-    KDNode* findMin(int dimension); // 0 = growth, 1 = cpm
+    KDNode* findMin(int dimension);
 
     vector<KDNode*> rangeSearch(float minGrowth, float maxGrowth,
                                 float minCpm, float maxCpm);
 
-    // Update and delete
     bool updateRegion(string region, float newGrowth, float newCpm);
     void deleteNode(string region);
+
+    KDNode* findMaxGrowth();
+    vector<KDNode*> getTopNByGrowth(int n);
 };
 
 #endif

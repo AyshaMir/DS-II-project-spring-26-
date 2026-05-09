@@ -1,16 +1,17 @@
 #include "kdtree.h"
+#include <algorithm>
 
-// Constructor
 KDTree::KDTree() {
     root = nullptr;
 }
 
-// Insert helper
 KDNode* KDTree::insert_recursion(KDNode* node, string region, float growth, float cpm, int depth) {
     if (node == nullptr) {
         return new KDNode(region, growth, cpm);
     }
+
     int axis = depth % 2;
+
     if (axis == 0) {
         if (growth < node->growth)
             node->left = insert_recursion(node->left, region, growth, cpm, depth + 1);
@@ -22,18 +23,19 @@ KDNode* KDTree::insert_recursion(KDNode* node, string region, float growth, floa
         else
             node->right = insert_recursion(node->right, region, growth, cpm, depth + 1);
     }
+
     return node;
 }
 
-// Public insert
 void KDTree::insert(string region, float growth, float cpm) {
     root = insert_recursion(root, region, growth, cpm, 0);
 }
 
-// Display helper
 void KDTree::display_recursion(KDNode* node, int depth) {
     if (node == nullptr) return;
+
     display_recursion(node->left, depth + 1);
+
     cout << "Region: " << node->region
          << " | Growth: " << node->growth
          << " | CPM: " << node->cpm
@@ -42,23 +44,21 @@ void KDTree::display_recursion(KDNode* node, int depth) {
     display_recursion(node->right, depth + 1);
 }
 
-// Public display
 void KDTree::display() {
     if (root == nullptr) {
         cout << "KD-Tree is empty." << endl;
         return;
     }
+
     display_recursion(root, 0);
 }
 
-// Squared Euclidean distance
 float KDTree::distanceSq(float growth1, float cpm1, float growth2, float cpm2) {
     float dx = growth1 - growth2;
     float dy = cpm1 - cpm2;
     return dx * dx + dy * dy;
 }
 
-// Nearest neighbor helper
 void KDTree::nearestRec(KDNode* node, float targetGrowth, float targetCpm, int depth,
                         KDNode*& bestNode, float& bestDist) {
     if (node == nullptr) return;
@@ -71,8 +71,9 @@ void KDTree::nearestRec(KDNode* node, float targetGrowth, float targetCpm, int d
     }
 
     int axis = depth % 2;
-    KDNode* nextBranch = nullptr;
-    KDNode* otherBranch = nullptr;
+
+    KDNode* nextBranch;
+    KDNode* otherBranch;
 
     if (axis == 0) {
         if (targetGrowth < node->growth) {
@@ -95,6 +96,7 @@ void KDTree::nearestRec(KDNode* node, float targetGrowth, float targetCpm, int d
     nearestRec(nextBranch, targetGrowth, targetCpm, depth + 1, bestNode, bestDist);
 
     float axisDist;
+
     if (axis == 0)
         axisDist = (targetGrowth - node->growth) * (targetGrowth - node->growth);
     else
@@ -105,7 +107,6 @@ void KDTree::nearestRec(KDNode* node, float targetGrowth, float targetCpm, int d
     }
 }
 
-// Public nearest neighbor
 KDNode* KDTree::nearestNeighbor(float targetGrowth, float targetCpm) {
     if (root == nullptr) return nullptr;
 
@@ -113,45 +114,49 @@ KDNode* KDTree::nearestNeighbor(float targetGrowth, float targetCpm) {
     float bestDist = numeric_limits<float>::max();
 
     nearestRec(root, targetGrowth, targetCpm, 0, bestNode, bestDist);
+
     return bestNode;
 }
 
-// Find minimum helper
 KDNode* KDTree::findMinRec(KDNode* node, int targetDim, int depth) {
     if (node == nullptr) return nullptr;
 
     int axis = depth % 2;
 
-    // If current axis matches target dimension, minimum must be in left subtree or current node
     if (axis == targetDim) {
         if (node->left == nullptr)
             return node;
+
         return findMinRec(node->left, targetDim, depth + 1);
     }
 
-    // Otherwise, minimum could be anywhere
     KDNode* leftMin = findMinRec(node->left, targetDim, depth + 1);
     KDNode* rightMin = findMinRec(node->right, targetDim, depth + 1);
     KDNode* minNode = node;
 
     if (targetDim == 0) {
-        if (leftMin && leftMin->growth < minNode->growth) minNode = leftMin;
-        if (rightMin && rightMin->growth < minNode->growth) minNode = rightMin;
+        if (leftMin && leftMin->growth < minNode->growth)
+            minNode = leftMin;
+
+        if (rightMin && rightMin->growth < minNode->growth)
+            minNode = rightMin;
     } else {
-        if (leftMin && leftMin->cpm < minNode->cpm) minNode = leftMin;
-        if (rightMin && rightMin->cpm < minNode->cpm) minNode = rightMin;
+        if (leftMin && leftMin->cpm < minNode->cpm)
+            minNode = leftMin;
+
+        if (rightMin && rightMin->cpm < minNode->cpm)
+            minNode = rightMin;
     }
 
     return minNode;
 }
 
-// Public findMin
 KDNode* KDTree::findMin(int dimension) {
     if (dimension != 0 && dimension != 1) return nullptr;
+
     return findMinRec(root, dimension, 0);
 }
 
-// Range search helper
 void KDTree::rangeSearchRec(KDNode* node,
                             float minGrowth, float maxGrowth,
                             float minCpm, float maxCpm,
@@ -159,7 +164,6 @@ void KDTree::rangeSearchRec(KDNode* node,
                             vector<KDNode*>& results) {
     if (node == nullptr) return;
 
-    // Check if current node lies in range
     if (node->growth >= minGrowth && node->growth <= maxGrowth &&
         node->cpm >= minCpm && node->cpm <= maxCpm) {
         results.push_back(node);
@@ -168,25 +172,26 @@ void KDTree::rangeSearchRec(KDNode* node,
     int axis = depth % 2;
 
     if (axis == 0) {
-        // Growth split
         if (minGrowth <= node->growth)
             rangeSearchRec(node->left, minGrowth, maxGrowth, minCpm, maxCpm, depth + 1, results);
+
         if (maxGrowth >= node->growth)
             rangeSearchRec(node->right, minGrowth, maxGrowth, minCpm, maxCpm, depth + 1, results);
     } else {
-        // CPM split
         if (minCpm <= node->cpm)
             rangeSearchRec(node->left, minGrowth, maxGrowth, minCpm, maxCpm, depth + 1, results);
+
         if (maxCpm >= node->cpm)
             rangeSearchRec(node->right, minGrowth, maxGrowth, minCpm, maxCpm, depth + 1, results);
     }
 }
 
-// Public range search
 vector<KDNode*> KDTree::rangeSearch(float minGrowth, float maxGrowth,
                                     float minCpm, float maxCpm) {
     vector<KDNode*> results;
+
     rangeSearchRec(root, minGrowth, maxGrowth, minCpm, maxCpm, 0, results);
+
     return results;
 }
 
@@ -196,6 +201,7 @@ KDNode* KDTree::searchRec(KDNode* node, string region) {
     if (node->region == region) return node;
 
     KDNode* left = searchRec(node->left, region);
+
     if (left != nullptr) return left;
 
     return searchRec(node->right, region);
@@ -204,7 +210,6 @@ KDNode* KDTree::searchRec(KDNode* node, string region) {
 KDNode* KDTree::searchRegion(string region) {
     return searchRec(root, region);
 }
-
 
 bool KDTree::updateRegion(string region, float newGrowth, float newCpm) {
     KDNode* node = searchRegion(region);
@@ -217,16 +222,12 @@ bool KDTree::updateRegion(string region, float newGrowth, float newCpm) {
     return true;
 }
 
-
 KDNode* KDTree::deleteRec(KDNode* node, string region, int depth) {
     if (node == nullptr) return nullptr;
 
     int axis = depth % 2;
 
-    // Found node to delete
     if (node->region == region) {
-
-        // Case 1: right subtree exists
         if (node->right != nullptr) {
             KDNode* minNode = findMinRec(node->right, axis, depth + 1);
 
@@ -235,9 +236,7 @@ KDNode* KDTree::deleteRec(KDNode* node, string region, int depth) {
             node->cpm = minNode->cpm;
 
             node->right = deleteRec(node->right, minNode->region, depth + 1);
-        }
-        // Case 2: only left subtree exists
-        else if (node->left != nullptr) {
+        } else if (node->left != nullptr) {
             KDNode* minNode = findMinRec(node->left, axis, depth + 1);
 
             node->region = minNode->region;
@@ -246,9 +245,7 @@ KDNode* KDTree::deleteRec(KDNode* node, string region, int depth) {
 
             node->right = deleteRec(node->left, minNode->region, depth + 1);
             node->left = nullptr;
-        }
-        // Case 3: leaf node
-        else {
+        } else {
             delete node;
             return nullptr;
         }
@@ -256,7 +253,6 @@ KDNode* KDTree::deleteRec(KDNode* node, string region, int depth) {
         return node;
     }
 
-    // Traverse (just use region for demo)
     node->left = deleteRec(node->left, region, depth + 1);
     node->right = deleteRec(node->right, region, depth + 1);
 
@@ -267,3 +263,42 @@ void KDTree::deleteNode(string region) {
     root = deleteRec(root, region, 0);
 }
 
+void KDTree::collectNodes(KDNode* node, vector<KDNode*>& nodes) {
+    if (node == nullptr) return;
+
+    collectNodes(node->left, nodes);
+    nodes.push_back(node);
+    collectNodes(node->right, nodes);
+}
+
+KDNode* KDTree::findMaxGrowth() {
+    vector<KDNode*> nodes;
+    collectNodes(root, nodes);
+
+    if (nodes.empty()) return nullptr;
+
+    KDNode* maxNode = nodes[0];
+
+    for (KDNode* node : nodes) {
+        if (node->growth > maxNode->growth) {
+            maxNode = node;
+        }
+    }
+
+    return maxNode;
+}
+
+vector<KDNode*> KDTree::getTopNByGrowth(int n) {
+    vector<KDNode*> nodes;
+    collectNodes(root, nodes);
+
+    sort(nodes.begin(), nodes.end(), [](KDNode* a, KDNode* b) {
+        return a->growth > b->growth;
+    });
+
+    if (n < (int)nodes.size()) {
+        nodes.resize(n);
+    }
+
+    return nodes;
+}
