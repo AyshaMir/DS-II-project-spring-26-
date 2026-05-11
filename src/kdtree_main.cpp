@@ -7,7 +7,7 @@ using namespace std;
 int main() {
     KDTree tree;
 
-    cout << "========== KD-TREE TEST MAIN ==========" << endl;
+    cout << "KD-TREE TEST MAIN " << endl;
 
     // INSERT
     cout << "\n[1] INSERT FUNCTION" << endl;
@@ -167,7 +167,7 @@ int main() {
         cout << "Brazil not found after delete." << endl;
     }
 
-    cout << "\n========== KD-TREE TEST COMPLETE ==========" << endl;
+    cout << "\n KD-TREE TEST COMPLETE =" << endl;
 
     return 0;
 }

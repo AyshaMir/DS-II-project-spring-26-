@@ -302,3 +302,13 @@ vector<KDNode*> KDTree::getTopNByGrowth(int n) {
 
     return nodes;
 }
+
+KDNode* KDTree::getRoot() {
+    return root;
+}
+
+vector<KDNode*> KDTree::getAllNodes() {
+    vector<KDNode*> nodes;
+    collectNodes(root, nodes);
+    return nodes;
+}

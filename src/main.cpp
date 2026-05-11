@@ -3,6 +3,7 @@
 #include <set>
 #include <algorithm>
 #include <iomanip>
+#include <limits>
 
 #include "dataloader.h"
 #include "analyzer_decisiontree.h"
@@ -11,7 +12,6 @@
 
 using namespace std;
 
-// Get all unique regions from loaded CSV data
 vector<string> getAllRegions(const vector<Entry>& data) {
     set<string> uniqueRegions;
 
@@ -22,7 +22,6 @@ vector<string> getAllRegions(const vector<Entry>& data) {
     return vector<string>(uniqueRegions.begin(), uniqueRegions.end());
 }
 
-// Get population of one region
 int getPopulation(const vector<Entry>& data, const string& region) {
     for (const auto& e : data) {
         if (e.region == region) {
@@ -33,7 +32,6 @@ int getPopulation(const vector<Entry>& data, const string& region) {
     return 0;
 }
 
-// Get total number of days in dataset
 int getMaxDay(const vector<Entry>& data) {
     int maxDay = 0;
 
@@ -46,20 +44,25 @@ int getMaxDay(const vector<Entry>& data) {
     return maxDay;
 }
 
+string chooseDataset() {
+    return "data/mpox_dataset.csv";
+}
+
 int main() {
     DataLoader loader;
     Analyzer analyzer;
     SparseMatrix sparseMatrix;
     KDTree kdTree;
 
-    cout << "=============================================" << endl;
+    cout << endl;
     cout << "        EPIDEMIC OUTBREAK DETECTOR" << endl;
-    cout << "=============================================" << endl;
+    cout << endl;
 
-    // STEP 1: Load data from CSV
-    cout << "\n[1] Loading dataset..." << endl;
+    string filename = chooseDataset();
 
-    vector<Entry> data = loader.loadCSV("data/dataset.csv");
+    cout << "\n[1] Loading dataset: " << filename << endl;
+
+    vector<Entry> data = loader.loadCSV(filename);
 
     if (data.empty()) {
         cout << "No data loaded from CSV." << endl;
@@ -68,15 +71,14 @@ int main() {
 
     cout << "Dataset loaded successfully." << endl;
 
-    // STEP 2: Sort data by region and day
     sort(data.begin(), data.end(), [](const Entry& a, const Entry& b) {
-        if (a.region == b.region)
+        if (a.region == b.region) {
             return a.day < b.day;
+        }
 
         return a.region < b.region;
     });
 
-    // STEP 3: Store non-zero case values in Sparse Matrix
     cout << "\n[2] Storing disease cases in Sparse Matrix..." << endl;
 
     for (const auto& e : data) {
@@ -88,22 +90,22 @@ int main() {
     cout << "\n========== SPARSE MATRIX CONTENTS ==========" << endl;
     sparseMatrix.print();
 
-    // STEP 4: Prepare region list and total days
     vector<string> regions = getAllRegions(data);
     int totalDays = getMaxDay(data);
 
     cout << "\n[3] Analyzing each region..." << endl;
-
     cout << "\n========== EPIDEMIC ANALYSIS REPORT ==========" << endl;
 
-    // STEP 5: Analyze each region
     for (const string& region : regions) {
         vector<int> fullCases = sparseMatrix.extractRegion(region, totalDays);
         vector<int> nonZeroCases = sparseMatrix.extractNonZeroCases(region);
         int population = getPopulation(data, region);
 
         if (nonZeroCases.empty()) {
-            cout << "No non-zero case data found for region: " << region << endl;
+            cout << "\nRegion: " << region << endl;
+            cout << "No non-zero case data found." << endl;
+            cout << "Final Status: SAFE" << endl;
+            cout << "---------------------------------------------" << endl;
             continue;
         }
 
@@ -114,7 +116,6 @@ int main() {
 
         string status = analyzer.classifyRegion(avgGrowth, trend, cpm);
 
-        // Insert analyzed region into KD-tree
         kdTree.insert(region, avgGrowth, cpm);
 
         cout << "\nRegion: " << region << endl;
@@ -139,13 +140,11 @@ int main() {
         cout << "---------------------------------------------" << endl;
     }
 
-    // STEP 6: Display KD-tree
     cout << "\n[4] Storing analyzed region metrics in KD-tree..." << endl;
 
     cout << "\n========== KD-TREE CONTENTS ==========" << endl;
     kdTree.display();
 
-    // STEP 7: Priority-style feature using KD-tree
     cout << "\n========== PRIORITY ANALYSIS USING KD-TREE ==========" << endl;
 
     KDNode* highestGrowth = kdTree.findMaxGrowth();
@@ -157,9 +156,9 @@ int main() {
              << " | CPM: " << highestGrowth->cpm << endl;
     }
 
-    cout << "\nTop 2 Regions By Growth:" << endl;
+    cout << "\nTop 5 Regions By Growth:" << endl;
 
-    vector<KDNode*> topRegions = kdTree.getTopNByGrowth(2);
+    vector<KDNode*> topRegions = kdTree.getTopNByGrowth(5);
 
     if (topRegions.empty()) {
         cout << "No regions available." << endl;
@@ -172,7 +171,6 @@ int main() {
         }
     }
 
-    // STEP 8: KD-tree search queries
     cout << "\n========== KD-TREE QUERY OPERATIONS ==========" << endl;
 
     float targetGrowth = 20.0f;
@@ -181,7 +179,7 @@ int main() {
     KDNode* nearest = kdTree.nearestNeighbor(targetGrowth, targetCpm);
 
     if (nearest != nullptr) {
-        cout << "\nNearest Region to Target Point (" 
+        cout << "\nNearest Region to Target Point ("
              << targetGrowth << ", " << targetCpm << "):" << endl;
 
         cout << nearest->region
@@ -207,13 +205,12 @@ int main() {
              << " | CPM: " << minCpm->cpm << endl;
     }
 
-    // STEP 9: Range search
     cout << "\n========== OUTBREAK RISK RANGE SEARCH ==========" << endl;
 
     float minGrowthRange = 10.0f;
-    float maxGrowthRange = 50.0f;
+    float maxGrowthRange = 80.0f;
     float minCpmRange = 0.0f;
-    float maxCpmRange = 0.1f;
+    float maxCpmRange = 5.0f;
 
     vector<KDNode*> rangeResults = kdTree.rangeSearch(
         minGrowthRange,
@@ -238,53 +235,52 @@ int main() {
         }
     }
 
-    // STEP 10: Demonstrate search, update, delete
     cout << "\n========== KD-TREE CORE FUNCTION DEMO ==========" << endl;
 
-    string searchRegion = "Pakistan";
+    string demoRegion = "Pakistan";
 
-    KDNode* found = kdTree.searchRegion(searchRegion);
+    KDNode* found = kdTree.searchRegion(demoRegion);
 
-    cout << "\nSearch Region: " << searchRegion << endl;
+    cout << "\nSearch Region: " << demoRegion << endl;
 
     if (found != nullptr) {
         cout << "Found: " << found->region
              << " | Growth: " << found->growth
              << " | CPM: " << found->cpm << endl;
     } else {
-        cout << searchRegion << " not found." << endl;
+        cout << demoRegion << " not found." << endl;
     }
 
-    cout << "\nUpdating Pakistan to Growth = 60.00 and CPM = 20.00..." << endl;
+    cout << "\nUpdating " << demoRegion << " to Growth = 60.00 and CPM = 20.00..." << endl;
 
-    bool updated = kdTree.updateRegion("Pakistan", 60.00f, 20.00f);
+    bool updated = kdTree.updateRegion(demoRegion, 60.00f, 20.00f);
 
     if (updated) {
-        cout << "Pakistan updated successfully." << endl;
+        cout << demoRegion << " updated successfully." << endl;
     } else {
-        cout << "Pakistan not found. Update failed." << endl;
+        cout << demoRegion << " not found. Update failed." << endl;
     }
 
     cout << "\nKD-tree after update:" << endl;
     kdTree.display();
 
-    cout << "\nDeleting Pakistan from KD-tree..." << endl;
-    kdTree.deleteNode("Pakistan");
+    cout << "\nDeleting " << demoRegion << " from KD-tree..." << endl;
+    kdTree.deleteNode(demoRegion);
 
-    KDNode* afterDelete = kdTree.searchRegion("Pakistan");
+    KDNode* afterDelete = kdTree.searchRegion(demoRegion);
 
     if (afterDelete == nullptr) {
-        cout << "Pakistan deleted successfully." << endl;
+        cout << demoRegion << " deleted successfully." << endl;
     } else {
-        cout << "Pakistan still exists." << endl;
+        cout << demoRegion << " still exists." << endl;
     }
 
     cout << "\nKD-tree after delete:" << endl;
     kdTree.display();
 
-    cout << "\n=============================================" << endl;
+    cout << endl;
     cout << "        ANALYSIS COMPLETE" << endl;
-    cout << "=============================================" << endl;
+    cout << endl;
 
     return 0;
 }

@@ -63,6 +63,9 @@ public:
 
     KDNode* findMaxGrowth();
     vector<KDNode*> getTopNByGrowth(int n);
+
+    KDNode* getRoot();
+    vector<KDNode*> getAllNodes();
 };
 
 #endif
