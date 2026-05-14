@@ -8,12 +8,6 @@ sf::Color statusColor(const string& status) {
     return sf::Color(215, 155, 35);
 }
 
-string lowerText(string value) {
-    transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
-        return (char)tolower(c);
-    });
-    return value;
-}
 
 string classifyVisualStatus(float growth, float cpm) {
     if ((growth > 30.0f) || (cpm > 0.5f)) return "OUTBREAK";

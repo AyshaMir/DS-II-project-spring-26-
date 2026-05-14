@@ -86,7 +86,6 @@ struct GraphBounds {
 };
 
 sf::Color statusColor(const string& status);
-string lowerText(string value);
 string classifyVisualStatus(float growth, float cpm);
 
 #endif

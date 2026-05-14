@@ -64,6 +64,13 @@ bool DashboardUI::loadFont(const string& path) {
     return true;
 }
 
+bool regionExists(const vector<string>& regions, const string& name) {
+    for (const string& r : regions) {
+        if (r == name) return true;
+    }
+    return false;
+}
+
 void DashboardUI::attachKDTree(KDTree* tree) {
     backendTree = tree;
 }
@@ -288,6 +295,11 @@ void DashboardUI::computeOutput() {
             return;
         }
 
+        if (!regionExists(backendRegionNames, regionName)) {
+            setOutput("Region not found. Region name must match the dataset exactly.");
+            return;
+        }
+
         bool found = backendSparse->search(regionName, day);
         int value = backendSparse->get(regionName, day);
 
@@ -308,11 +320,11 @@ void DashboardUI::computeOutput() {
     }
 
     if (currentScreen == SCR_SEARCH) {
-        string query = lowerText(inputs[0].value);
+        string query = inputs[0].value;
         searchIndex = -1;
 
         for (int i = 0; i < (int)regions.size(); i++) {
-            if (lowerText(regions[i].name) == query) {
+            if (regions[i].name == query) {
                 searchIndex = i;
                 break;
             }
@@ -441,6 +453,13 @@ void DashboardUI::computeOutput() {
 
         if (regionName.empty()) {
             setOutput("Enter a region name to show its trend.");
+            return;
+        }
+
+        if (!regionExists(backendRegionNames, regionName)) {
+            selectedTrend.clear();
+            selectedTrendName = "";
+            setOutput("Region not found. Region name must match the dataset exactly.");
             return;
         }
 
